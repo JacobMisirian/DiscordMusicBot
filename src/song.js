@@ -233,6 +233,6 @@ module.exports = class Song {
   }
 
   toString() {
-    return `[${this.title}](${this.url}) - requested by ${this.requestedBy}`;
+    return `[${this.title}](<${this.url}>) - requested by ${this.requestedBy}`;
   }
 };
