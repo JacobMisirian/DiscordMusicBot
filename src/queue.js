@@ -27,8 +27,8 @@ class MusicQueue {
     return this._queue[position] || null;
   }
 
-  removeAt(position) {
-    this._queue.splice(position, 1);
+  remove(element) {
+    this._queue = this._queue.filter((item) => item !== element);
   }
 
   get length() {

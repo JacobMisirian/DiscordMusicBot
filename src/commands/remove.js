@@ -36,7 +36,7 @@ module.exports = {
       });
       return;
     }
-    queue.removeAt(position - 1);
+    queue.remove(songToRemove);
     await interaction.reply({
       content: `Removed **${songToRemove.title}** from the queue.`,
     });

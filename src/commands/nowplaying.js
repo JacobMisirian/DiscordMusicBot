@@ -14,7 +14,7 @@ module.exports = {
     }
 
     await interaction.reply(
-      `Now playing: ${currentSong.toString()}${currentSong.paused ? " (paused)" : ""}${currentSong.stopped ? " (stopped)" : ""}.`,
+      `Now playing: ${currentSong.toString(true)}${currentSong.paused ? " (paused)" : ""}${currentSong.stopped ? " (stopped)" : ""}.`,
     );
   },
 };

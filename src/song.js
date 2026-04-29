@@ -249,7 +249,7 @@ module.exports = class Song {
     }
   }
 
-  toString() {
+  toString(showLinkPreviews = false) {
     const songLength = this.duration; // seconds, stored at enqueue time
     const playbackDurationMs = this.player?.state?.resource?.playbackDuration;
     const currentTime =
@@ -283,6 +283,6 @@ module.exports = class Song {
         : lengthStr
           ? ` [${lengthStr}]`
           : "";
-    return `**[${this.title}](<${this.url}>)** - requested by **${this.requestedBy}**${progressStr}${this.paused ? " (paused)" : ""}${this.stopped ? " (stopped)" : ""}`;
+    return `**[${this.title}](${showLinkPreviews ? "" : "<"}${this.url}${showLinkPreviews ? "" : ">"})** - requested by **${this.requestedBy}**${progressStr}${this.paused ? " (paused)" : ""}${this.stopped ? " (stopped)" : ""}`;
   }
 };
