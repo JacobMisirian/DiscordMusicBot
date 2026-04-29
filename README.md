@@ -4,11 +4,11 @@ This project requires docker & docker-compose.
 
 # Step 1. Create Discord Application
 
--Navigate to [the Discord Application Portal](https://discord.com/developers/applications).
--Click the Create button and name your application. You should be taken to the "General Information" tab for this application.
--Take your Application ID. This will be the `CLIENT_ID` in the .env
--Click on the bot tab. Under token, click Reset Token and take note of the generated token. This will be the BOT_TOKEN in the .env
--In the Discord App, find the server you want to add the bot to, right click, and choose "Copy Server Info"->"Copy Server ID". This will be the GUILD_ID in the .env
+- Navigate to [the Discord Application Portal](https://discord.com/developers/applications).
+- Click the Create button and name your application. You should be taken to the "General Information" tab for this application.
+- Take your Application ID. This will be the `CLIENT_ID` in the .env
+- Click on the bot tab. Under token, click Reset Token and take note of the generated token. This will be the BOT_TOKEN in the .env
+- In the Discord App, find the server you want to add the bot to, right click, and choose "Copy Server Info"->"Copy Server ID". This will be the GUILD_ID in the .env
 
 # Step 2. Create .env File
 
