@@ -1,0 +1,24 @@
+{
+  "name": "music-bot",
+  "version": "0.1.0",
+  "description": "Discord music bot (starter)",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@discordjs/voice": "^0.19.2",
+    "@distube/ytdl-core": "^4.16.12",
+    "discord.js": "^14.11.0",
+    "dotenv": "^16.0.3",
+    "ffmpeg-static": "^5.2.0",
+    "opusscript": "^0.0.8",
+    "youtubei.js": "^17.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
+}

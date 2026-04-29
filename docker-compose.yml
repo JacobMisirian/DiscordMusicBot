@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  musicbot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: musicbot
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Optional: explicitly point to yt-dlp if needed.
+      YT_DLP_PATH: ${YT_DLP_PATH:-yt-dlp}
+      NODE_ENV: production
+      BOT_TOKEN: ${BOT_TOKEN}
+      CLIENT_ID: ${CLIENT_ID}
+      GUILD_ID: ${GUILD_ID}
+    command: npm start
