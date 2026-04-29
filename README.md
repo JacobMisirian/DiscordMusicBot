@@ -54,3 +54,29 @@ Shutdown the docker container and start it again with:
 ```
 docker compose up
 ```
+
+# Available Commands
+
+## /play :url_or_query
+
+Will queue and play (if no songs are currently in queue) the given YouTube URL if one is given. If a query is given the first search result will be used.
+
+## /queueplaylist :url
+
+Will queue and play (if no songs are currently in queue) all songs under the given YouTube playlist URL.
+
+## /skip
+
+Stops playback for the current song and begins playing the next song in queue.
+
+## /stop
+
+Stops playback for the current song.
+
+## /clearqueue
+
+Empties the queue.
+
+## /join
+
+The bot will join the voice channel of the user who sent the command. Note that both /play and /queueplaylist will automatically join the user's channel if the bot is not already present. This command is therefore mostly useless.
