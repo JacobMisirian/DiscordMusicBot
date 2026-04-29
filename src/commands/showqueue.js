@@ -12,6 +12,6 @@ module.exports = {
     const songList = songs
       .map((song, index) => `${index + 1}. ${song.toString()}`)
       .join("\n");
-    await interaction.reply(`Current Queue:\n${songList}`);
+    await interaction.reply(`Queue:\n${songList}`);
   },
 };
