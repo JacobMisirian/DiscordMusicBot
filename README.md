@@ -1,4 +1,4 @@
-# Music Bot (starter)
+# Music Bot
 
 This project requires docker & docker-compose.
 
