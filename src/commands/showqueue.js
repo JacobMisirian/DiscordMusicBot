@@ -10,8 +10,18 @@ module.exports = {
       return;
     }
     const songList = songs
-      .map((song, index) => `${index + 1}. ${song.toString()}`)
+      .map((song, index) => `**${index + 1}**. ${song.toString()}`)
       .join("\n");
-    await interaction.reply(`Queue:\n${songList}`);
+    // Discord messages have a maximum length of 2000 characters, so we may need to truncate the list
+    const maxMessageLength = 2000;
+    let truncated = false;
+    let displayedSongList = songList;
+    if (songList.length > maxMessageLength) {
+      displayedSongList =
+        songList.slice(0, maxMessageLength - 100) + "\n... (truncated)";
+      truncated = true;
+    }
+
+    await interaction.reply(`Queue:\n${displayedSongList}`);
   },
 };
