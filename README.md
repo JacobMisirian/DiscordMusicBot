@@ -77,6 +77,10 @@ Stops playback for the current song.
 
 Empties the queue.
 
+## /listqueue
+
+Lists the contents of the queue, with links to the source videos and the name of the user who requested them.
+
 ## /join
 
 The bot will join the voice channel of the user who sent the command. Note that both /play and /queueplaylist will automatically join the user's channel if the bot is not already present. This command is therefore mostly useless.
