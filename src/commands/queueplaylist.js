@@ -1,4 +1,5 @@
 const { Innertube } = require("youtubei.js");
+const { AudioPlayerStatus } = require("@discordjs/voice");
 const queue = require("../queue");
 const Song = require("../song");
 
@@ -98,16 +99,35 @@ module.exports = {
             voiceChannel,
           );
         }
-        const nextSong = queue.getCurrentSong();
-        if (nextSong) {
+
+        async function playNextSongFromPlaylist() {
+          queue.skip();
+          const nextSong = queue.getSongs()[0];
+          if (!nextSong) {
+            return;
+          }
+
           await nextSong.playSongInDiscord(client, connection);
-          nextSong.player.once("idle", async () => {
-            if (nextSong.stopped) return;
-            queue.skip();
-            const after = queue.getCurrentSong();
-            if (after) {
-              await after.playSongInDiscord(client, connection);
+          nextSong.player.once(AudioPlayerStatus.Idle, async () => {
+            if (nextSong.stopped) {
+              return;
             }
+
+            try {
+              await playNextSongFromPlaylist();
+            } catch (error) {
+              console.error("Failed to play next song from playlist:", error);
+              await playNextSongFromPlaylist();
+            }
+          });
+        }
+
+        const firstSong = queue.getCurrentSong();
+        if (firstSong) {
+          await firstSong.playSongInDiscord(client, connection);
+          firstSong.player.once(AudioPlayerStatus.Idle, async () => {
+            if (firstSong.stopped) return;
+            await playNextSongFromPlaylist();
           });
         }
       }

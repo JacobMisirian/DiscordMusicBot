@@ -9,17 +9,17 @@ module.exports = {
       await interaction.reply("The queue is currently empty.");
       return;
     }
-    const songList = songs
-      .map((song, index) => `**${index + 1}**. ${song.toString()}`)
-      .join("\n");
-    // Discord messages have a maximum length of 2000 characters, so we may need to truncate the list
-    const maxMessageLength = 2000;
-    let truncated = false;
-    let displayedSongList = songList;
-    if (songList.length > maxMessageLength) {
-      displayedSongList =
-        songList.slice(0, maxMessageLength - 100) + "\n... (truncated)";
-      truncated = true;
+    const songList = songs.map(
+      (song, index) => `**${index + 1}**. ${song.toString()}`,
+    );
+
+    let displayedSongList = "";
+    for (const songEntry of songList) {
+      if (displayedSongList.length + songEntry.length + 30 > 2000) {
+        displayedSongList += `...and ${songList.length - displayedSongList.split("\n").length} more.`;
+        break;
+      }
+      displayedSongList += `${songEntry}\n`;
     }
 
     await interaction.reply(`Queue:\n${displayedSongList}`);
