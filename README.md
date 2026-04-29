@@ -19,37 +19,22 @@ Create a .env file with the following information from above
 BOT_TOKEN=...
 CLIENT_ID=...
 GUILD_ID=...
+INACTIVITY_TIMEOUT_MS=... # Default 300000 (5 minutes)
 ```
 
-# Step 3. First-Time Startup
+# Step 3. Invite bot
 
-The first time the bot connects to a server it must be authorized. The application will log an authorization link that must be copied and ran in the browser.
-
-Execute:
+Using the `CLIENT_ID` obtained in Step 1, visit the following page in your browser:
 
 ```
-docker compose up --build
-
-musicbot  |
-musicbot  | > music-bot@0.1.0 start
-musicbot  | > node src/index.js
-musicbot  |
-musicbot  | Logged in as [BOTNAME]
-musicbot  | (node:19) DeprecationWarning: The ready event has been renamed to clientReady to distinguish it from the gateway READY event and will only emit under that name in v15. Please use clientReady instead.
-musicbot  | (Use `node --trace-deprecation ...` to show where the warning was created)
-musicbot  | Bot is logged in but is not in the configured guild [YOUR_GUILD_ID].
-musicbot  | Invite it with: https://discord.com/oauth2/authorize?client_id=[CLIENT_ID]&scope=bot%20applications.commands&permissions=3148800
+https://discord.com/oauth2/authorize?client_id=[CLIENT_ID]&scope=bot%20applications.commands&permissions=3148800
 ```
 
-Copy the invite link and open in the browser. You will be promped to select the server you wish to add the bot to.
-
-_IMPORTANT_
-
-After completing the invite process you must close the docker container and restart the application.
+Select the server you wish to add the bot to and authorize the bot.
 
 # Step 4.
 
-Shutdown the docker container and start it again with:
+Start the application with docker-compose:
 
 ```
 docker compose up
@@ -71,15 +56,31 @@ Stops playback for the current song and begins playing the next song in queue.
 
 ## /stop
 
-Stops playback for the current song.
+Stops playback for the current song. Will not allow resuming. /skip must be used.
+
+## /pause
+
+Pauses playback for the current song. Will not count as inactivity.
+
+## /resume
+
+Resumes playback for the current paused song.
+
+## /nowplaying
+
+Shows the currently playing song, with link to the source video, the name of the user that requested it, the paused/stopped status of the song if applicable, and the current timestamp.
+
+## /showqueue
+
+Displays the contents of the queue, with links to the source videos and the name of the user who requested them, the paused/stopped status of the song if applicable, and the current timestamp.
+
+## /remove :position
+
+Removes the song at the specified 1-indexed position from the queue.
 
 ## /clearqueue
 
 Empties the queue.
-
-## /listqueue
-
-Lists the contents of the queue, with links to the source videos and the name of the user who requested them.
 
 ## /join
 

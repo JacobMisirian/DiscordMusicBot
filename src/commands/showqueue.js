@@ -1,7 +1,7 @@
 const queue = require("../queue");
 
 module.exports = {
-  name: "listqueue",
+  name: "showqueue",
   description: "Lists the songs currently in the queue.",
   async execute(client, interaction) {
     const songs = queue.getSongs();

@@ -23,6 +23,14 @@ class MusicQueue {
     return this._queue[0] || null;
   }
 
+  getSongAt(position) {
+    return this._queue[position] || null;
+  }
+
+  removeAt(position) {
+    this._queue.splice(position, 1);
+  }
+
   get length() {
     return this._queue.length;
   }

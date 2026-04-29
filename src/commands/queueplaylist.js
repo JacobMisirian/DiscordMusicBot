@@ -2,6 +2,15 @@ const { Innertube } = require("youtubei.js");
 const queue = require("../queue");
 const Song = require("../song");
 
+function getRequestedByName(interaction) {
+  return (
+    interaction.member?.displayName ||
+    interaction.member?.nickname ||
+    interaction.user.globalName ||
+    interaction.user.username
+  );
+}
+
 function extractPlaylistId(input) {
   try {
     const url = new URL(input);
@@ -55,6 +64,7 @@ module.exports = {
 
       let needToStartPlayer = queue.getCurrentSong() === null;
       let added = 0;
+      const requestedBy = getRequestedByName(interaction);
       for (const video of items) {
         const videoId = video.id;
         if (!videoId) continue;
@@ -62,11 +72,13 @@ module.exports = {
           typeof video.title?.text === "string"
             ? video.title.text
             : (video.title?.toString?.() ?? `https://youtu.be/${videoId}`);
+        const duration = video.duration?.seconds ?? null;
         queue.enqueue(
           new Song({
             title,
             url: `https://www.youtube.com/watch?v=${videoId}`,
-            requestedBy: interaction.user.tag,
+            requestedBy,
+            duration,
           }),
         );
         added++;

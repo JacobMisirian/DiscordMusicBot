@@ -8,6 +8,16 @@ const Song = require("../song");
 const { connectToVoiceChannel } = require("../voiceManager");
 
 const guildPlayers = new Map();
+let ytClientPromise = null;
+
+function getRequestedByName(interaction) {
+  return (
+    interaction.member?.displayName ||
+    interaction.member?.nickname ||
+    interaction.user.globalName ||
+    interaction.user.username
+  );
+}
 
 function extractYouTubeVideoId(input) {
   try {
@@ -69,14 +79,25 @@ async function playNextSongFromQueue(guild, connection) {
 
 async function getFirstResultFromYoutubeSearch(query) {
   try {
-    const yt = await Innertube.create();
+    if (!ytClientPromise) {
+      ytClientPromise = Innertube.create();
+    }
+    const yt = await ytClientPromise;
     const searchResults = await yt.search(query, { type: "video" });
     const firstVideo = searchResults?.videos?.[0];
     if (!firstVideo) {
       throw new Error("No video results found");
     }
-    return `https://www.youtube.com/watch?v=${firstVideo.id}`;
+    return {
+      url: `https://www.youtube.com/watch?v=${firstVideo.id}`,
+      title:
+        firstVideo.title?.text ||
+        firstVideo.title?.toString?.() ||
+        `https://youtu.be/${firstVideo.id}`,
+    };
   } catch (error) {
+    // Recreate the shared client if it became unusable.
+    ytClientPromise = null;
     console.error("Error performing YouTube search:", error);
     throw new Error(
       "Failed to perform YouTube search. Please try again later.",
@@ -106,7 +127,10 @@ module.exports = {
       return;
     }
 
+    await interaction.deferReply();
+
     let songUrl;
+    let searchTitle = null;
     if (
       urlOrSearch.startsWith("http://") ||
       urlOrSearch.startsWith("https://")
@@ -114,9 +138,11 @@ module.exports = {
       songUrl = urlOrSearch;
     } else {
       try {
-        songUrl = await getFirstResultFromYoutubeSearch(urlOrSearch);
+        const searchResult = await getFirstResultFromYoutubeSearch(urlOrSearch);
+        songUrl = searchResult.url;
+        searchTitle = searchResult.title;
       } catch (error) {
-        await interaction.reply({
+        await interaction.editReply({
           content: error.message,
           ephemeral: true,
         });
@@ -126,7 +152,7 @@ module.exports = {
 
     const voiceChannel = interaction.member?.voice?.channel;
     if (!voiceChannel) {
-      await interaction.reply({
+      await interaction.editReply({
         content: "Join a voice channel first, then run /play.",
         ephemeral: true,
       });
@@ -136,7 +162,7 @@ module.exports = {
     const me = interaction.guild?.members?.me;
     const perms = me ? voiceChannel.permissionsFor(me) : null;
     if (!perms?.has("Connect") || !perms?.has("Speak")) {
-      await interaction.reply({
+      await interaction.editReply({
         content: "I need Connect and Speak permissions in your voice channel.",
         ephemeral: true,
       });
@@ -146,7 +172,7 @@ module.exports = {
     try {
       const videoId = extractYouTubeVideoId(songUrl);
       if (!videoId) {
-        await interaction.reply({
+        await interaction.editReply({
           content:
             "Please provide a valid YouTube URL (watch, youtu.be, shorts, or embed).",
           ephemeral: true,
@@ -154,46 +180,56 @@ module.exports = {
         return;
       }
 
-      await interaction.deferReply();
-
       const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
       console.log(`Fetching video info for ${videoUrl}...`);
-      let title;
+      const alreadyPlaying = queue.length > 0;
+      let title = searchTitle || `https://youtu.be/${videoId}`;
+      let duration = null;
 
       try {
         const songInfo = await ytdl.getInfo(videoUrl);
-        title = songInfo?.videoDetails?.title;
+        title = songInfo?.videoDetails?.title || title;
+        const rawLength = songInfo?.videoDetails?.lengthSeconds;
+        duration = rawLength ? parseInt(rawLength, 10) : null;
       } catch (primaryError) {
         console.warn(
           "Primary YouTube extractor failed; trying youtubei.js for title:",
           primaryError.message,
         );
         try {
-          const innertube = await Innertube.create();
+          if (!ytClientPromise) {
+            ytClientPromise = Innertube.create();
+          }
+          const innertube = await ytClientPromise;
           const basicInfo = await innertube.getBasicInfo(videoId);
           title =
             basicInfo?.basic_info?.title ||
             basicInfo?.video_details?.title ||
-            basicInfo?.videoDetails?.title;
+            basicInfo?.videoDetails?.title ||
+            title;
+          const rawLength = basicInfo?.basic_info?.duration;
+          duration = rawLength ? Math.round(rawLength) : null;
         } catch (secondaryError) {
+          ytClientPromise = null;
           console.warn(
             "youtubei.js title fetch failed:",
             secondaryError.message,
           );
-          title = `https://youtu.be/${videoId}`;
         }
       }
 
-      const queuedSong = new Song({
-        title,
-        url: videoUrl,
-        requestedBy: interaction.user.tag,
-      });
-      queue.enqueue(queuedSong);
+      queue.enqueue(
+        new Song({
+          title,
+          url: videoUrl,
+          requestedBy: getRequestedByName(interaction),
+          duration,
+        }),
+      );
 
-      if (queue.length > 1) {
+      if (alreadyPlaying) {
         await interaction.editReply(
-          `Added to queue: ${title} (position ${queue.length}). Use /listqueue to see the full queue.`,
+          `Added to queue: ${title} (position ${queue.length}). Use /showqueue to see the full queue.`,
         );
         return;
       }

@@ -83,13 +83,15 @@ async function createYtDlpAudioStream(videoUrl) {
 }
 
 module.exports = class Song {
-  constructor({ title, url, requestedBy }) {
+  constructor({ title, url, requestedBy, duration = null }) {
     this.title = title;
     this.url = url;
     this.requestedBy = requestedBy;
+    this.duration = duration; // seconds
     this.player = null;
     this.sourceProcess = null;
     this.stopped = false;
+    this.paused = false;
   }
 
   async playSongInDiscord(client, connection) {
@@ -219,10 +221,25 @@ module.exports = class Song {
 
   stop() {
     this.stopped = true;
+    this.paused = false;
     if (this.player) {
       this.player.stop(true);
     }
     this._cleanup();
+  }
+
+  pause() {
+    if (this.player && !this.paused) {
+      this.player.pause();
+      this.paused = true;
+    }
+  }
+
+  resume() {
+    if (this.player && this.paused) {
+      this.player.unpause();
+      this.paused = false;
+    }
   }
 
   _cleanup() {
@@ -233,6 +250,39 @@ module.exports = class Song {
   }
 
   toString() {
-    return `[${this.title}](<${this.url}>) - requested by ${this.requestedBy}`;
+    const songLength = this.duration; // seconds, stored at enqueue time
+    const playbackDurationMs = this.player?.state?.resource?.playbackDuration;
+    const currentTime =
+      typeof playbackDurationMs === "number"
+        ? playbackDurationMs / 1000
+        : undefined;
+
+    let lengthStr = null;
+    const lengthDate = songLength ? new Date(songLength * 1000) : null;
+    if (lengthDate && !isNaN(lengthDate.getTime())) {
+      if (songLength >= 3600) {
+        lengthStr = lengthDate.toISOString().substr(11, 8);
+      } else {
+        lengthStr = lengthDate.toISOString().substr(14, 5);
+      }
+    }
+
+    let currentTimeStr = null;
+    const currentTimeDate = currentTime ? new Date(currentTime * 1000) : null;
+    if (currentTimeDate && !isNaN(currentTimeDate.getTime())) {
+      if (currentTime >= 3600) {
+        currentTimeStr = currentTimeDate.toISOString().substr(11, 8);
+      } else {
+        currentTimeStr = currentTimeDate.toISOString().substr(14, 5);
+      }
+    }
+
+    const progressStr =
+      currentTimeStr && lengthStr
+        ? ` [${currentTimeStr} / ${lengthStr}]`
+        : lengthStr
+          ? ` [${lengthStr}]`
+          : "";
+    return `**[${this.title}](<${this.url}>)** - requested by **${this.requestedBy}**${progressStr}${this.paused ? " (paused)" : ""}${this.stopped ? " (stopped)" : ""}`;
   }
 };

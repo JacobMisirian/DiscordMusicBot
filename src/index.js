@@ -6,6 +6,8 @@ const {
   SlashCommandBuilder,
 } = require("discord.js");
 const config = require("./config");
+const queue = require("./queue");
+const { getActiveConnection } = require("./voiceManager");
 
 const commandModules = require("fs")
   .readdirSync("./src/commands")
@@ -26,6 +28,14 @@ const commands = commandModules
       cmd.arguments.forEach((arg) => {
         if (arg.type === "STRING") {
           builder.addStringOption((option) =>
+            option
+              .setName(arg.name)
+              .setDescription(arg.description)
+              .setRequired(Boolean(arg.required)),
+          );
+        }
+        if (arg.type === "INTEGER") {
+          builder.addIntegerOption((option) =>
             option
               .setName(arg.name)
               .setDescription(arg.description)
@@ -90,3 +100,25 @@ client.on("interactionCreate", async (interaction) => {
 client.login(config.BOT_TOKEN).catch((err) => {
   console.error("Failed to login:", err.message);
 });
+
+let lastTimePlayerWasActive = Date.now();
+
+setInterval(() => {
+  const connection = getActiveConnection();
+  if (!connection) {
+    return;
+  }
+
+  const currentSong = queue.getCurrentSong();
+  if (currentSong && !currentSong.stopped) {
+    lastTimePlayerWasActive = Date.now();
+  }
+
+  if (Date.now() - lastTimePlayerWasActive > config.INACTIVITY_TIMEOUT_MS) {
+    console.log(
+      "No activity detected for a while. Stopping player and clearing queue.",
+    );
+    queue.clear();
+    connection.destroy();
+  }
+}, 1000);
