@@ -10,15 +10,6 @@ const { connectToVoiceChannel } = require("../voiceManager");
 const guildPlayers = new Map();
 let ytClientPromise = null;
 
-function getRequestedByName(interaction) {
-  return (
-    interaction.member?.displayName ||
-    interaction.member?.nickname ||
-    interaction.user.globalName ||
-    interaction.user.username
-  );
-}
-
 function extractYouTubeVideoId(input) {
   try {
     const url = new URL(input);
@@ -184,37 +175,34 @@ module.exports = {
       console.log(`Fetching video info for ${videoUrl}...`);
       const alreadyPlaying = queue.length > 0;
       let title = searchTitle || `https://youtu.be/${videoId}`;
-      let duration = null;
 
-      try {
-        const songInfo = await ytdl.getInfo(videoUrl);
-        title = songInfo?.videoDetails?.title || title;
-        const rawLength = songInfo?.videoDetails?.lengthSeconds;
-        duration = rawLength ? parseInt(rawLength, 10) : null;
-      } catch (primaryError) {
-        console.warn(
-          "Primary YouTube extractor failed; trying youtubei.js for title:",
-          primaryError.message,
-        );
+      if (!alreadyPlaying) {
         try {
-          if (!ytClientPromise) {
-            ytClientPromise = Innertube.create();
-          }
-          const innertube = await ytClientPromise;
-          const basicInfo = await innertube.getBasicInfo(videoId);
-          title =
-            basicInfo?.basic_info?.title ||
-            basicInfo?.video_details?.title ||
-            basicInfo?.videoDetails?.title ||
-            title;
-          const rawLength = basicInfo?.basic_info?.duration;
-          duration = rawLength ? Math.round(rawLength) : null;
-        } catch (secondaryError) {
-          ytClientPromise = null;
+          const songInfo = await ytdl.getInfo(videoUrl);
+          title = songInfo?.videoDetails?.title || title;
+        } catch (primaryError) {
           console.warn(
-            "youtubei.js title fetch failed:",
-            secondaryError.message,
+            "Primary YouTube extractor failed; trying youtubei.js for title:",
+            primaryError.message,
           );
+          try {
+            if (!ytClientPromise) {
+              ytClientPromise = Innertube.create();
+            }
+            const innertube = await ytClientPromise;
+            const basicInfo = await innertube.getBasicInfo(videoId);
+            title =
+              basicInfo?.basic_info?.title ||
+              basicInfo?.video_details?.title ||
+              basicInfo?.videoDetails?.title ||
+              title;
+          } catch (secondaryError) {
+            ytClientPromise = null;
+            console.warn(
+              "youtubei.js title fetch failed:",
+              secondaryError.message,
+            );
+          }
         }
       }
 
@@ -222,14 +210,13 @@ module.exports = {
         new Song({
           title,
           url: videoUrl,
-          requestedBy: getRequestedByName(interaction),
-          duration,
+          requestedBy: interaction.user.tag,
         }),
       );
 
       if (alreadyPlaying) {
         await interaction.editReply(
-          `Added to queue: ${title} (position ${queue.length}). Use /showqueue to see the full queue.`,
+          `Added to queue: ${title} (position ${queue.length}). Use /listqueue to see the full queue.`,
         );
         return;
       }

@@ -104,50 +104,19 @@ module.exports = class Song {
     let stream;
     this.sourceProcess = null;
 
-    // Extract audio stream — waterfall: ytdl-core → youtubei.js → yt-dlp
-    try {
-      const songInfo = await ytdl.getInfo(videoUrl);
-      stream = ytdl.downloadFromInfo(songInfo, {
-        filter: "audioonly",
-        quality: "highestaudio",
-        highWaterMark: 1 << 25,
-        dlChunkSize: 0,
-      });
-    } catch (primaryError) {
-      console.warn(
-        "Primary YouTube extractor failed; trying youtubei.js fallback:",
-        primaryError.message,
-      );
+    const ytDlpResult = await createYtDlpAudioStream(videoUrl);
+    stream = ytDlpResult.stream;
+    this.sourceProcess = ytDlpResult.process;
 
-      try {
-        const innertube = await Innertube.create();
-        const webStream = await innertube.download(videoId, {
-          type: "audio",
-          quality: "best",
-          format: "any",
-        });
-        stream = Readable.fromWeb(webStream);
-      } catch (secondaryError) {
-        console.warn(
-          "youtubei.js fallback failed; trying yt-dlp fallback:",
-          secondaryError.message,
-        );
-
-        const ytDlpResult = await createYtDlpAudioStream(videoUrl);
-        stream = ytDlpResult.stream;
-        this.sourceProcess = ytDlpResult.process;
-
-        console.log(
-          `[song] yt-dlp process started, PID: ${this.sourceProcess.pid}`,
-        );
-        this.sourceProcess.stderr.on("data", (chunk) =>
-          console.error("[song] yt-dlp stderr:", chunk.toString().trimEnd()),
-        );
-        this.sourceProcess.once("close", (code) =>
-          console.log(`[song] yt-dlp process exited with code ${code}`),
-        );
-      }
-    }
+    console.log(
+      `[song] yt-dlp process started, PID: ${this.sourceProcess.pid}`,
+    );
+    this.sourceProcess.stderr.on("data", (chunk) =>
+      console.error("[song] yt-dlp stderr:", chunk.toString().trimEnd()),
+    );
+    this.sourceProcess.once("close", (code) =>
+      console.log(`[song] yt-dlp process exited with code ${code}`),
+    );
 
     // Build FFmpeg transcoder pipeline
     console.log("[song] Creating FFmpeg transcoder...");
