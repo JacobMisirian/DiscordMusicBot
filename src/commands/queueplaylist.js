@@ -67,7 +67,7 @@ module.exports = {
       let added = 0;
       const requestedBy = getRequestedByName(interaction);
       for (const video of items) {
-        const videoId = video.id;
+        const videoId = video.id || video.content_id;
         if (!videoId) continue;
         const title =
           typeof video.title?.text === "string"
@@ -90,7 +90,6 @@ module.exports = {
       );
 
       if (needToStartPlayer) {
-        console.log("Starting player for newly queued playlist...");
         let connection = require("../voiceManager").getActiveConnection();
         if (!connection) {
           const voiceChannel = interaction.member?.voice?.channel;

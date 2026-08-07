@@ -216,7 +216,7 @@ module.exports = {
 
       if (alreadyPlaying) {
         await interaction.editReply(
-          `Added to queue: ${title} (position ${queue.length}). Use /listqueue to see the full queue.`,
+          `Added to queue: ${title} (position ${queue.length}). Use /showqueue to see the full queue.`,
         );
         return;
       }
